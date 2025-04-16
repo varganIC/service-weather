@@ -1,0 +1,53 @@
+version: "3.8"
+
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    command: >
+      bash -c "
+        alembic upgrade head &&
+        python app/init_db.py &&
+        uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+      "
+    ports:
+      - "${PORT}:${PORT}"
+
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    ports:
+      - "8081:8080"
+    command: >
+      bash -c "/opt/airflow/entrypoint.sh"
+
+
+volumes:
+  postgres_data:

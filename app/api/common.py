@@ -26,4 +26,4 @@ class BaseResponse(Generic[T]):
         if obj is None:
             return None
 
-        return self.generic_type(**obj._asdict())
+        return self.generic_type.from_orm(obj)

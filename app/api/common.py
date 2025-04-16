@@ -24,6 +24,6 @@ class BaseResponse(Generic[T]):
 
     def get_typed_response_single(self, obj) -> T:
         if obj is None:
-            return None
+            return []
 
         return self.generic_type.from_orm(obj)
